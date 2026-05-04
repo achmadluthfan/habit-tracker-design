@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Habitly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; }
+body { background: #f7f3ee; font-family: 'DM Sans', sans-serif; overflow: hidden; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4c9b8; border-radius: 99px; }
+button:focus-visible { outline: 2px solid #e8825a; outline-offset: 2px; }
+textarea, input, select { font-family: inherit; }
+select { appearance: none; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fade-up { animation: fadeUp 0.28s ease both; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+// ─── THEME ────────────────────────────────────────────────────────────────────
+const T = {
+  colors: {
+    bg: '#f7f3ee', bgCard: '#fffcf8', bgMuted: '#f0ebe3',
+    border: '#e8e0d4', borderStrong: '#d4c9b8',
+    text: '#2d2520', textMid: '#6b5e52', textMuted: '#9e8e80',
+    accent: '#e8825a', accentLight: '#fae8df',
+    gold: '#c9a96e', goldLight: '#f5eddb',
+    green: '#4caf7d', greenLight: '#dff4eb',
+    blue: '#6b9fd4', blueLight: '#deeaf7',
+    purple: '#9b7fd4', purpleLight: '#ede5f7',
+  },
+  radius: { sm: '8px', md: '14px', lg: '20px', xl: '28px', full: '9999px' },
+  shadow: {
+    sm: '0 1px 3px rgba(45,37,32,0.06)',
+    md: '0 4px 16px rgba(45,37,32,0.08)',
+    lg: '0 8px 32px rgba(45,37,32,0.10)',
+  },
+  font: { sans: "'DM Sans', sans-serif", mono: "'DM Mono', monospace" },
+};
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { id: 'health',   label: 'Health',   color: '#4caf7d' },
+  { id: 'learning', label: 'Learning', color: '#6b9fd4' },
+  { id: 'mindful',  label: 'Mindful',  color: '#9b7fd4' },
+  { id: 'fitness',  label: 'Fitness',  color: '#e8825a' },
+  { id: 'creative', label: 'Creative', color: '#c9a96e' },
+];
+
+const INIT_HABITS = [
+  { id: 1, name: 'Learn English', category: 'learning', streak: 12, longest: 21, rate: 89, done: true,  note: '', flashcard: true,  schedule: 'Daily',
+    subHabits: [
+      { id: 101, name: 'Speaking',  done: true  },
+      { id: 102, name: 'Listening', done: true  },
+      { id: 103, name: 'Writing',   done: false },
+      { id: 104, name: 'Reading',   done: false },
+    ]},
+  { id: 2, name: 'Morning Run',   category: 'fitness',  streak: 7,  longest: 14, rate: 78, done: false, note: '', flashcard: false, schedule: 'Daily',
+    subHabits: [
+      { id: 201, name: 'Warm-up',   done: false },
+      { id: 202, name: '5km run',   done: false },
+    ]},
+  { id: 3, name: 'Meditate',      category: 'mindful',  streak: 5,  longest: 18, rate: 65, done: true,  note: 'Felt peaceful', flashcard: false, schedule: 'Daily', subHabits: [] },
+  { id: 4, name: 'Read a Book',   category: 'learning', streak: 3,  longest: 9,  rate: 72, done: false, note: '', flashcard: false, schedule: 'Daily', subHabits: [] },
+  { id: 5, name: 'Drink Water',   category: 'health',   streak: 21, longest: 21, rate: 95, done: true,  note: '', flashcard: false, schedule: 'Daily', subHabits: [] },
+  { id: 6, name: 'Sketch Daily',  category: 'creative', streak: 0,  longest: 5,  rate: 40, done: false, note: '', flashcard: false, schedule: 'Daily', subHabits: [] },
+];
+
+const CAT_CONFIGS = [
+  { name: 'Ember', color: '#e8825a', mood: 'happy',   streak: 12, level: 4, accessory: 'sunglasses' },
+  { name: 'Moss',  color: '#4caf7d', mood: 'happy',   streak: 7,  level: 3, accessory: 'crown' },
+  { name: 'Dusk',  color: '#9b7fd4', mood: 'neutral', streak: 2,  level: 2, accessory: null },
+  { name: 'Sand',  color: '#c9a96e', mood: 'sad',     streak: 0,  level: 1, accessory: null },
+  { name: 'Mist',  color: '#6b9fd4', mood: 'happy',   streak: 21, level: 5, accessory: 'ribbon' },
+  { name: 'Rust',  color: '#c97a5a', mood: 'neutral', streak: 3,  level: 2, accessory: null },
+];
+
+const DECKS_DATA = [
+  { id: 1, name: 'IELTS Vocab',        description: 'Academic word list for IELTS 7+',         cardCount: 142, dueToday: 18, lastStudied: '2026-05-03' },
+  { id: 2, name: 'Daily Expressions',  description: 'Idioms and collocations from podcasts',   cardCount: 64,  dueToday: 5,  lastStudied: '2026-05-04' },
+  { id: 3, name: 'Business English',   description: 'Formal vocab for writing and meetings',   cardCount: 88,  dueToday: 0,  lastStudied: '2026-04-28' },
+  { id: 4, name: 'Phrasal Verbs',      description: 'Tricky two-word verbs',                   cardCount: 37,  dueToday: 12, lastStudied: '2026-05-02' },
+];
+
+const CARDS_DATA = [
+  { id: 1, deckId: 1, word: 'Meticulous',             partOfSpeech: 'adj',
+    meaning: 'Showing great attention to detail; very careful and precise.',
+    example: 'She was meticulous in her research, checking every source twice.',
+    pronunciation: '/mɪˈtɪk.jʊ.ləs/', easeFactor: 2.5, interval: 4, repetitions: 3, dueDate: '2026-05-04' },
+  { id: 2, deckId: 1, word: 'Ephemeral',              partOfSpeech: 'adj',
+    meaning: 'Lasting for a very short time.',
+    example: 'The beauty of cherry blossoms is ephemeral — gone in a week.',
+    pronunciation: '/ɪˈfem.ər.əl/', easeFactor: 1.8, interval: 1, repetitions: 1, dueDate: '2026-05-04' },
+  { id: 3, deckId: 1, word: 'Ubiquitous',             partOfSpeech: 'adj',
+    meaning: 'Present, appearing, or found everywhere.',
+    example: 'Smartphones have become ubiquitous in modern society.',
+    pronunciation: '/juːˈbɪk.wɪ.təs/', easeFactor: 2.2, interval: 2, repetitions: 2, dueDate: '2026-05-04' },
+  { id: 4, deckId: 2, word: 'Hit the nail on the head', partOfSpeech: 'idiom',
+    meaning: 'To describe exactly what is causing a situation or problem.',
+    example: "You hit the nail on the head — that's exactly the issue.",
+    pronunciation: '', easeFactor: 2.6, interval: 6, repetitions: 4, dueDate: '2026-05-06' },
+];
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function genHeatmap(rate = 0.75) {
+  const today = new Date(2026, 4, 4);
+  const set = new Set();
+  for (let i = 0; i < 180; i++) {
+    const d = new Date(today.getTime() - i * 86400000);
+    if (Math.random() < rate) set.add(d.toISOString().slice(0, 10));
+  }
+  return set;
+}
+
+// ─── TWEAKS ───────────────────────────────────────────────────────────────────
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "#e8825a",
+  "bgTone": "warm",
+  "showStreakEmoji": true,
+  "catSize": "medium"
+}/*EDITMODE-END*/;
+
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  function setTweak(keyOrObj, val) {
+    const patch = typeof keyOrObj === 'string' ? { [keyOrObj]: val } : keyOrObj;
+    setValues(prev => ({ ...prev, ...patch }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: patch }, '*');
+  }
+  return [values, setTweak];
+}
+
+function TweaksPanel({ children }) {
+  const [open, setOpen] = React.useState(false);
+  React.useEffect(() => {
+    function onMsg(e) {
+      if (e.data?.type === '__activate_edit_mode') setOpen(true);
+      if (e.data?.type === '__deactivate_edit_mode') setOpen(false);
+    }
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+  if (!open) return null;
+  return (
+    <div style={{
+      position: 'fixed', bottom: '90px', right: '16px', zIndex: 999,
+      background: T.colors.bgCard, border: `1px solid ${T.colors.border}`,
+      borderRadius: T.radius.lg, padding: '18px', width: '240px',
+      boxShadow: T.shadow.lg, display: 'flex', flexDirection: 'column', gap: '14px',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '14px', color: T.colors.text }}>Tweaks</span>
+        <button onClick={() => { setOpen(false); window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: T.colors.textMuted }}>×</button>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function TweakSection({ title, children }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ fontFamily: T.font.sans, fontSize: '11px', fontWeight: 700, color: T.colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{title}</div>
+      {children}
+    </div>
+  );
+}
+
+function TweakColor({ label, value, onChange }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <span style={{ fontFamily: T.font.sans, fontSize: '13px', color: T.colors.textMid }}>{label}</span>
+      <input type="color" value={value} onChange={e => onChange(e.target.value)}
+        style={{ width: '36px', height: '24px', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: 0 }} />
+    </div>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <span style={{ fontFamily: T.font.sans, fontSize: '13px', color: T.colors.textMid }}>{label}</span>
+      <div onClick={() => onChange(!value)} style={{
+        width: '36px', height: '20px', borderRadius: T.radius.full, cursor: 'pointer',
+        background: value ? T.colors.accent : T.colors.bgMuted, position: 'relative', transition: 'background 0.2s',
+      }}>
+        <div style={{
+          position: 'absolute', top: '3px', left: value ? '17px' : '3px',
+          width: '14px', height: '14px', borderRadius: '50%', background: 'white',
+          transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+        }} />
+      </div>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+      <span style={{ fontFamily: T.font.sans, fontSize: '13px', color: T.colors.textMid }}>{label}</span>
+      <div style={{ display: 'flex', gap: '4px' }}>
+        {options.map(o => (
+          <button key={o.value} onClick={() => onChange(o.value)} style={{
+            flex: 1, padding: '5px 0', borderRadius: T.radius.sm,
+            border: `1.5px solid ${value === o.value ? T.colors.accent : T.colors.border}`,
+            background: value === o.value ? T.colors.accentLight : 'transparent',
+            color: value === o.value ? T.colors.accent : T.colors.textMid,
+            fontFamily: T.font.sans, fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+          }}>{o.label}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── CAT WIDGET ───────────────────────────────────────────────────────────────
+function CatFace({ color, mood, size = 80, accessory }) {
+  const s = size;
+  const happy = mood === 'happy', sad = mood === 'sad';
+  const eyeY = s * 0.44, eyeSpacing = s * 0.17, cx = s / 2;
+  const gradId = `cg${color.replace('#', '')}`;
+  return (
+    <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} style={{ display: 'block' }}>
+      <defs>
+        <radialGradient id={gradId} cx="45%" cy="40%" r="60%">
+          <stop offset="0%" stopColor={color} stopOpacity="0.95" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.55" />
+        </radialGradient>
+      </defs>
+      {/* Ears */}
+      <ellipse cx={cx-s*.22} cy={s*.22} rx={s*.11} ry={s*.14} fill={color} opacity=".7" transform={`rotate(-18,${cx-s*.22},${s*.22})`}/>
+      <ellipse cx={cx+s*.22} cy={s*.22} rx={s*.11} ry={s*.14} fill={color} opacity=".7" transform={`rotate(18,${cx+s*.22},${s*.22})`}/>
+      <ellipse cx={cx-s*.22} cy={s*.22} rx={s*.055} ry={s*.076} fill="white" opacity=".4" transform={`rotate(-18,${cx-s*.22},${s*.22})`}/>
+      <ellipse cx={cx+s*.22} cy={s*.22} rx={s*.055} ry={s*.076} fill="white" opacity=".4" transform={`rotate(18,${cx+s*.22},${s*.22})`}/>
+      {/* Head */}
+      <ellipse cx={cx} cy={s*.54} rx={s*.38} ry={s*.35} fill={`url(#${gradId})`}/>
+      {/* Eyes */}
+      {happy ? (<>
+        <path d={`M${cx-eyeSpacing-s*.06} ${eyeY} Q${cx-eyeSpacing} ${eyeY-s*.07} ${cx-eyeSpacing+s*.06} ${eyeY}`} stroke="white" strokeWidth={s*.035} fill="none" strokeLinecap="round" opacity=".9"/>
+        <path d={`M${cx+eyeSpacing-s*.06} ${eyeY} Q${cx+eyeSpacing} ${eyeY-s*.07} ${cx+eyeSpacing+s*.06} ${eyeY}`} stroke="white" strokeWidth={s*.035} fill="none" strokeLinecap="round" opacity=".9"/>
+      </>) : sad ? (<>
+        <ellipse cx={cx-eyeSpacing} cy={eyeY+s*.02} rx={s*.04} ry={s*.025} fill="white" opacity=".7"/>
+        <ellipse cx={cx+eyeSpacing} cy={eyeY+s*.02} rx={s*.04} ry={s*.025} fill="white" opacity=".7"/>
+      </>) : (<>
+        <rect x={cx-eyeSpacing-s*.055} y={eyeY-s*.015} width={s*.11} height={s*.03} rx={s*.015} fill="white" opacity=".85"/>
+        <rect x={cx+eyeSpacing-s*.055} y={eyeY-s*.015} width={s*.11} height={s*.03} rx={s*.015} fill="white" opacity=".85"/>
+      </>)}
+      {/* Nose */}
+      <ellipse cx={cx} cy={s*.56} rx={s*.04} ry={s*.025} fill="white" opacity=".6"/>
+      {/* Mouth */}
+      {happy
+        ? <path d={`M${cx-s*.06} ${s*.60} Q${cx} ${s*.67} ${cx+s*.06} ${s*.60}`} stroke="white" strokeWidth={s*.025} fill="none" strokeLinecap="round" opacity=".7"/>
+        : sad
+        ? <path d={`M${cx-s*.06} ${s*.65} Q${cx} ${s*.60} ${cx+s*.06} ${s*.65}`} stroke="white" strokeWidth={s*.025} fill="none" strokeLinecap="round" opacity=".5"/>
+        : <line x1={cx-s*.05} y1={s*.62} x2={cx+s*.05} y2={s*.62} stroke="white" strokeWidth={s*.025} strokeLinecap="round" opacity=".5"/>
+      }
+      {/* Whiskers */}
+      {[[-1,s*.55],[-1,s*.62],[1,s*.55],[1,s*.62]].map(([dir,y],i) => (
+        <line key={i}
+          x1={cx+dir*s*.38} y1={y} x2={cx+dir*s*.16} y2={y+(dir>0?0.02:-0.02)*s}
+          stroke="white" strokeWidth={s*.018} opacity=".3" strokeLinecap="round"/>
+      ))}
+      {/* Accessories */}
+      {accessory === 'sunglasses' && (<>
+        <rect x={cx-eyeSpacing-s*.09} y={eyeY-s*.06} width={s*.16} height={s*.1} rx={s*.04} fill="#2d2520" opacity=".75"/>
+        <rect x={cx+eyeSpacing-s*.07} y={eyeY-s*.06} width={s*.16} height={s*.1} rx={s*.04} fill="#2d2520" opacity=".75"/>
+        <line x1={cx-eyeSpacing+s*.07} y1={eyeY-.01*s} x2={cx+eyeSpacing-s*.07} y2={eyeY-.01*s} stroke="#2d2520" strokeWidth={s*.03} opacity=".75"/>
+      </>)}
+      {accessory === 'crown' && (
+        <polygon points={`${cx-s*.14},${s*.18} ${cx-s*.14},${s*.08} ${cx},${s*.14} ${cx+s*.14},${s*.08} ${cx+s*.14},${s*.18}`} fill="#c9a96e" opacity=".9"/>
+      )}
+      {accessory === 'ribbon' && (<>
+        <ellipse cx={cx-s*.2} cy={s*.2} rx={s*.1} ry={s*.07} fill="#e8825a" opacity=".85" transform={`rotate(-30,${cx-s*.2},${s*.2})`}/>
+        <ellipse cx={cx-s*.2} cy={s*.2} rx={s*.1} ry={s*.07} fill="#e8825a" opacity=".85" transform={`rotate(30,${cx-s*.2},${s*.2})`}/>
+        <circle cx={cx-s*.2} cy={s*.2} r={s*.04} fill="#f7f3ee" opacity=".9"/>
+      </>)}
+    </svg>
+  );
+}
+
+function CatCard({ cat, habitName }) {
+  const [hov, setHov] = React.useState(false);
+  const moodLabel = { happy: 'Vibing ✦', neutral: 'Chill', sad: 'Needs love' }[cat.mood];
+  const moodColor = { happy: T.colors.green, neutral: T.colors.gold, sad: T.colors.accent }[cat.mood];
+  return (
+    <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{
+      background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.lg,
+      padding: '24px', cursor: 'default',
+      transform: hov ? 'translateY(-4px)' : '', boxShadow: hov ? T.shadow.md : T.shadow.sm,
+      transition: 'all 0.18s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px',
+    }}>
+      <CatFace color={cat.color} mood={cat.mood} size={84} accessory={cat.accessory}/>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '16px', color: T.colors.text }}>{cat.name}</div>
+        <div style={{ fontFamily: T.font.sans, fontSize: '12px', color: T.colors.textMuted, marginTop: '2px' }}>{habitName}</div>
+      </div>
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <span style={{ background: T.colors.bgMuted, color: T.colors.textMid, borderRadius: T.radius.full, padding: '2px 9px', fontSize: '11px', fontFamily: T.font.mono }}>Lv.{cat.level}</span>
+        <span style={{ background: moodColor+'22', color: moodColor, borderRadius: T.radius.full, padding: '2px 9px', fontSize: '11px', fontFamily: T.font.sans, fontWeight: 600 }}>{moodLabel}</span>
+        {cat.streak > 0 && <span style={{ background: T.colors.accentLight, color: T.colors.accent, borderRadius: T.radius.full, padding: '2px 9px', fontSize: '11px', fontFamily: T.font.mono }}>{cat.streak}🔥</span>}
+      </div>
+      <div style={{ width: '100%' }}>
+        <div style={{ height: '4px', background: T.colors.bgMuted, borderRadius: T.radius.full, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${(cat.streak%10)*10+20}%`, background: cat.color, borderRadius: T.radius.full, transition: 'width 0.5s ease' }}/>
+        </div>
+        <div style={{ fontFamily: T.font.mono, fontSize: '10px', color: T.colors.textMuted, marginTop: '3px', textAlign: 'right' }}>{(cat.streak%10)*10+20}/100 XP</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── STATS WIDGETS ────────────────────────────────────────────────────────────
+function HeatmapGrid({ completions }) {
+  const today = new Date(2026, 4, 4);
+  const cells = [];
+  for (let i = 179; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * 86400000);
+    const key = d.toISOString().slice(0, 10);
+    cells.push({ date: key, done: completions.has(key) });
+  }
+  const weeks = [];
+  let week = [];
+  const firstDay = new Date(cells[0].date).getDay();
+  for (let i = 0; i < firstDay; i++) week.push(null);
+  cells.forEach(c => { week.push(c); if (week.length === 7) { weeks.push(week); week = []; } });
+  if (week.length) { while (week.length < 7) week.push(null); weeks.push(week); }
+  const ML = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DL = ['S','M','T','W','T','F','S'];
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', paddingTop: '18px' }}>
+          {DL.map((d,i) => <div key={i} style={{ width: '14px', height: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: T.colors.textMuted, fontFamily: T.font.mono }}>{i%2===1?d:''}</div>)}
+        </div>
+        <div>
+          <div style={{ display: 'flex', gap: '3px', marginBottom: '3px', height: '16px' }}>
+            {weeks.map((w, wi) => {
+              const fr = w.find(c => c !== null);
+              if (!fr) return <div key={wi} style={{ width: '14px' }}/>;
+              const d = new Date(fr.date);
+              return <div key={wi} style={{ width: '14px', fontSize: '9px', color: T.colors.textMuted, fontFamily: T.font.mono, overflow: 'visible', whiteSpace: 'nowrap' }}>{d.getDate() <= 7 ? ML[d.getMonth()] : ''}</div>;
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: '3px' }}>
+            {weeks.map((w, wi) => (
+              <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                {w.map((cell, di) => (
+                  <div key={di} style={{ width: '14px', height: '14px', borderRadius: '3px', background: cell === null ? 'transparent' : cell.done ? T.colors.accent : T.colors.bgMuted }}/>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatPill({ label, value, color }) {
+  return (
+    <div style={{ background: T.colors.bgMuted, borderRadius: T.radius.md, padding: '12px 18px', display: 'flex', flexDirection: 'column', gap: '2px', minWidth: '90px' }}>
+      <div style={{ fontFamily: T.font.mono, fontSize: '22px', fontWeight: 700, color: color || T.colors.text, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontFamily: T.font.sans, fontSize: '12px', color: T.colors.textMuted }}>{label}</div>
+    </div>
+  );
+}
+
+function BarChart({ data, color }) {
+  const max = Math.max(...data.map(d => d.count), 1);
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '104px' }}>
+      {data.map((d, i) => (
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <div style={{ width: '28px', height: `${(d.count/max)*80}px`, minHeight: d.count>0?'6px':'3px', background: d.count>0?(color||T.colors.accent):T.colors.bgMuted, borderRadius: '5px 5px 3px 3px', opacity: 0.5+0.5*(i/(data.length-1||1)) }}/>
+          <div style={{ fontFamily: T.font.mono, fontSize: '10px', color: T.colors.textMuted }}>{d.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── HABIT ROW ────────────────────────────────────────────────────────────────
+function CategoryChip({ category, small }) {
+  const cat = CATEGORIES.find(c => c.id === category) || { label: category, color: T.colors.textMuted };
+  return (
+    <span style={{ background: cat.color+'22', color: cat.color, borderRadius: T.radius.full, padding: small ? '2px 8px' : '3px 10px', fontSize: small ? '11px' : '12px', fontFamily: T.font.sans, fontWeight: 600, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{cat.label}</span>
+  );
+}
+
+function HabitRow({ habit, onToggle, onToggleSub, onNote, catColor }) {
+  const [hov, setHov] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(false);
+  const subs = habit.subHabits || [];
+  const hasSubs = subs.length > 0;
+  const subDone = subs.filter(s => s.done).length;
+
+  return (
+    <div>
+      {/* Main row */}
+      <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+        style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '13px 16px', background: hov ? T.colors.bgMuted : 'transparent', borderRadius: T.radius.md, transition: 'background 0.15s', cursor: 'default' }}>
+        {/* Checkbox */}
+        <button onClick={() => onToggle(habit.id)} style={{ width: '26px', height: '26px', borderRadius: T.radius.full, border: `2px solid ${habit.done ? catColor||T.colors.accent : T.colors.borderStrong}`, background: habit.done ? catColor||T.colors.accent : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.18s' }}>
+          {habit.done && <svg width="11" height="8" viewBox="0 0 11 8" fill="none"><path d="M1 4L4 7L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+        </button>
+        {/* Name */}
+        <span style={{ fontFamily: T.font.sans, fontWeight: 600, fontSize: '15px', color: habit.done ? T.colors.textMuted : T.colors.text, textDecoration: habit.done ? 'line-through' : 'none', transition: 'all 0.15s', minWidth: '120px', flexShrink: 0 }}>{habit.name}</span>
+        {/* Chips */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+          <CategoryChip category={habit.category} small />
+          {habit.flashcard && <span style={{ background: T.colors.blueLight, color: T.colors.blue, borderRadius: T.radius.full, padding: '2px 8px', fontSize: '11px', fontFamily: T.font.sans, fontWeight: 600, whiteSpace: 'nowrap' }}>📖 Flashcard</span>}
+          {/* Sub-habit progress pill */}
+          {hasSubs && (
+            <button onClick={() => setExpanded(e => !e)} style={{ background: (catColor||T.colors.accent)+'18', border: `1px solid ${(catColor||T.colors.accent)}33`, borderRadius: T.radius.full, padding: '2px 9px', fontSize: '11px', fontFamily: T.font.mono, color: catColor||T.colors.accent, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
+              {subDone}/{subs.length}
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+                <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
+        </div>
+        {/* Stats */}
+        <div style={{ display: 'flex', gap: '14px', flexShrink: 0 }}>
+          <span style={{ fontFamily: T.font.mono, fontSize: '12px', color: T.colors.textMuted, whiteSpace: 'nowrap' }}>{habit.streak > 0 ? `🔥 ${habit.streak}d` : '—'}</span>
+          <span style={{ fontFamily: T.font.mono, fontSize: '12px', color: T.colors.textMuted, whiteSpace: 'nowrap' }}>{habit.rate}%</span>
+        </div>
+        {/* Note btn */}
+        <button onClick={() => onNote(habit.id)} style={{ opacity: hov ? 0.7 : 0.15, transition: 'opacity 0.15s', background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: T.colors.textMuted, flexShrink: 0 }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3h12v9H8l-4 3V3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" fill="none"/></svg>
+        </button>
+      </div>
+
+      {/* Sub-habits — expandable */}
+      {hasSubs && expanded && (
+        <div style={{ paddingLeft: '54px', paddingRight: '16px', paddingBottom: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {subs.map(sub => (
+            <div key={sub.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 12px', borderRadius: T.radius.md, background: T.colors.bgMuted }}>
+              {/* Sub checkbox — diamond shape */}
+              <button onClick={() => onToggleSub(habit.id, sub.id)} style={{ width: '20px', height: '20px', borderRadius: '4px', border: `2px solid ${sub.done ? catColor||T.colors.accent : T.colors.borderStrong}`, background: sub.done ? catColor||T.colors.accent : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.18s', transform: 'rotate(45deg)' }}>
+                {sub.done && <svg width="8" height="6" viewBox="0 0 8 6" fill="none" style={{ transform: 'rotate(-45deg)' }}><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              </button>
+              <span style={{ fontFamily: T.font.sans, fontSize: '13px', fontWeight: 500, color: sub.done ? T.colors.textMuted : T.colors.textMid, textDecoration: sub.done ? 'line-through' : 'none', transition: 'all 0.15s', flex: 1 }}>{sub.name}</span>
+              {sub.done && <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" fill={(catColor||T.colors.accent)+'33'}/><path d="M4 6.5L6 8.5L9.5 4.5" stroke={catColor||T.colors.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── MODALS ───────────────────────────────────────────────────────────────────
+function Overlay({ onClose, children }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(45,37,32,0.42)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()}>{children}</div>
+    </div>
+  );
+}
+
+const modalBox = { background: T.colors.bgCard, borderRadius: T.radius.xl, padding: '30px', boxShadow: T.shadow.lg, display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '90vh', overflowY: 'auto' };
+const inputStyle = { width: '100%', padding: '10px 13px', borderRadius: T.radius.md, border: `1.5px solid ${T.colors.border}`, background: T.colors.bg, fontFamily: T.font.sans, fontSize: '14px', color: T.colors.text, outline: 'none', boxSizing: 'border-box' };
+
+function AddHabitModal({ onClose, onAdd }) {
+  const [name, setName] = React.useState('');
+  const [cat, setCat] = React.useState('health');
+  const [sched, setSched] = React.useState('daily');
+  const [subHabits, setSubHabits] = React.useState([]);
+  const [subInput, setSubInput] = React.useState('');
+
+  const lbl = { fontFamily: T.font.sans, fontSize: '12px', color: T.colors.textMid, fontWeight: 600, display: 'block', marginBottom: '5px' };
+
+  function addSub() {
+    const val = subInput.trim();
+    if (!val) return;
+    setSubHabits(prev => [...prev, { id: Date.now(), name: val, done: false }]);
+    setSubInput('');
+  }
+
+  function removeSub(id) {
+    setSubHabits(prev => prev.filter(s => s.id !== id));
+  }
+
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ ...modalBox, width: '460px', maxWidth: '92vw' }}>
+        <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '20px', color: T.colors.text }}>New Habit</div>
+
+        {/* Name */}
+        <div>
+          <label style={lbl}>Habit name</label>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Learn English" style={inputStyle}/>
+        </div>
+
+        {/* Category + Schedule */}
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={lbl}>Category</label>
+            <select value={cat} onChange={e => setCat(e.target.value)} style={inputStyle}>
+              {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={lbl}>Schedule</label>
+            <select value={sched} onChange={e => setSched(e.target.value)} style={inputStyle}>
+              <option value="daily">Daily</option>
+              <option value="weekdays">Weekdays</option>
+              <option value="weekends">Weekends</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Sub-habits */}
+        <div>
+          <label style={lbl}>Sub-habits <span style={{ fontWeight: 400, color: T.colors.textMuted }}>— optional</span></label>
+
+          {/* Existing sub-habits */}
+          {subHabits.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
+              {subHabits.map((sub, i) => (
+                <div key={sub.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: T.colors.bgMuted, borderRadius: T.radius.md }}>
+                  {/* Drag handle visual */}
+                  <svg width="12" height="14" viewBox="0 0 12 14" fill="none" style={{ flexShrink: 0, opacity: 0.3 }}>
+                    <circle cx="3" cy="3" r="1.5" fill={T.colors.text}/><circle cx="9" cy="3" r="1.5" fill={T.colors.text}/>
+                    <circle cx="3" cy="7" r="1.5" fill={T.colors.text}/><circle cx="9" cy="7" r="1.5" fill={T.colors.text}/>
+                    <circle cx="3" cy="11" r="1.5" fill={T.colors.text}/><circle cx="9" cy="11" r="1.5" fill={T.colors.text}/>
+                  </svg>
+                  <span style={{ flex: 1, fontFamily: T.font.sans, fontSize: '14px', color: T.colors.text }}>{sub.name}</span>
+                  <button onClick={() => removeSub(sub.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.colors.textMuted, padding: '2px 4px', fontSize: '16px', lineHeight: 1, borderRadius: T.radius.sm }}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add sub-habit input */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              value={subInput}
+              onChange={e => setSubInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSub(); }}}
+              placeholder="e.g. Speaking, Listening…"
+              style={{ ...inputStyle, flex: 1 }}
+            />
+            <button onClick={addSub} style={{ padding: '10px 16px', borderRadius: T.radius.md, border: `1.5px solid ${T.colors.border}`, background: subInput.trim() ? T.colors.accent : T.colors.bgMuted, color: subInput.trim() ? 'white' : T.colors.textMuted, fontFamily: T.font.sans, fontSize: '14px', fontWeight: 700, cursor: subInput.trim() ? 'pointer' : 'default', transition: 'all 0.15s', flexShrink: 0 }}>
+              + Add
+            </button>
+          </div>
+          <div style={{ fontFamily: T.font.sans, fontSize: '11px', color: T.colors.textMuted, marginTop: '5px' }}>Press Enter or click + Add · sub-habits appear as checkboxes under the main habit</div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
+          <button onClick={onClose} style={{ padding: '9px 18px', borderRadius: T.radius.md, border: `1.5px solid ${T.colors.border}`, background: 'none', fontFamily: T.font.sans, fontSize: '14px', color: T.colors.textMid, cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+          <button onClick={() => { if (name.trim()) { onAdd({ name, category: cat, schedule: sched, subHabits }); onClose(); }}} style={{ padding: '9px 22px', borderRadius: T.radius.md, border: 'none', background: T.colors.accent, color: 'white', fontFamily: T.font.sans, fontSize: '14px', fontWeight: 700, cursor: 'pointer', opacity: name.trim() ? 1 : 0.45 }}>Create Habit</button>
+        </div>
+      </div>
+    </Overlay>
+  );
+}
+
+function NoteModal({ habitName, note, onSave, onClose }) {
+  const [text, setText] = React.useState(note);
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ ...modalBox, width: '380px', maxWidth: '92vw' }}>
+        <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '18px', color: T.colors.text }}>Note · {habitName}</div>
+        <textarea value={text} onChange={e => setText(e.target.value)} placeholder="How did it go today?" rows={4}
+          style={{ ...inputStyle, height: '90px', resize: 'vertical', lineHeight: 1.6 }}/>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ padding: '9px 18px', borderRadius: T.radius.md, border: `1.5px solid ${T.colors.border}`, background: 'none', fontFamily: T.font.sans, fontSize: '14px', color: T.colors.textMid, cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+          <button onClick={() => { onSave(text); onClose(); }} style={{ padding: '9px 20px', borderRadius: T.radius.md, border: 'none', background: T.colors.accent, color: 'white', fontFamily: T.font.sans, fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}>Save</button>
+        </div>
+      </div>
+    </Overlay>
+  );
+}
+
+function CardDetailModal({ card, onClose }) {
+  const posColors = { adj: T.colors.purple, noun: T.colors.blue, verb: T.colors.green, adv: T.colors.gold, idiom: T.colors.accent };
+  const pc = posColors[card.partOfSpeech] || T.colors.textMuted;
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ ...modalBox, width: '490px', maxWidth: '92vw', padding: 0 }}>
+        <div style={{ padding: '26px 26px 18px', borderBottom: `1px solid ${T.colors.border}` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <span style={{ background: pc+'22', color: pc, borderRadius: T.radius.full, padding: '2px 10px', fontSize: '12px', fontFamily: T.font.sans, fontWeight: 600 }}>{card.partOfSpeech}</span>
+              <div style={{ fontFamily: T.font.sans, fontWeight: 800, fontSize: '30px', color: T.colors.text, marginTop: '8px', lineHeight: 1 }}>{card.word}</div>
+              {card.pronunciation && <div style={{ fontFamily: T.font.mono, fontSize: '13px', color: T.colors.textMuted, marginTop: '4px' }}>{card.pronunciation}</div>}
+            </div>
+            <button onClick={onClose} style={{ background: T.colors.bgMuted, border: 'none', borderRadius: T.radius.full, width: '30px', height: '30px', cursor: 'pointer', fontSize: '16px', color: T.colors.textMid, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+          </div>
+        </div>
+        <div style={{ padding: '18px 26px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <div style={{ fontFamily: T.font.sans, fontSize: '11px', color: T.colors.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Meaning</div>
+            <div style={{ fontFamily: T.font.sans, fontSize: '15px', color: T.colors.text, lineHeight: 1.6 }}>{card.meaning}</div>
+          </div>
+          <div>
+            <div style={{ fontFamily: T.font.sans, fontSize: '11px', color: T.colors.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Example</div>
+            <div style={{ fontFamily: T.font.sans, fontSize: '14px', color: T.colors.textMid, fontStyle: 'italic', background: T.colors.bgMuted, padding: '10px 13px', borderRadius: T.radius.md, lineHeight: 1.7 }}>"{card.example}"</div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', paddingTop: '4px' }}>
+            {[`EF: ${card.easeFactor}`, `Interval: ${card.interval}d`, `Reps: ${card.repetitions}`, `Next: ${card.dueDate}`].map(s => (
+              <span key={s} style={{ fontFamily: T.font.mono, fontSize: '11px', color: T.colors.textMuted, background: T.colors.bgMuted, padding: '3px 9px', borderRadius: T.radius.sm }}>{s}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Overlay>
+  );
+}
+
+function AddCardModal({ onClose, decks }) {
+  const [word, setWord] = React.useState('');
+  const [pos, setPos] = React.useState('adj');
+  const [meaning, setMeaning] = React.useState('');
+  const [example, setExample] = React.useState('');
+  const [pron, setPron] = React.useState('');
+  const [deckId, setDeckId] = React.useState(decks[0]?.id || 1);
+  const lbl = { fontFamily: T.font.sans, fontSize: '12px', color: T.colors.textMid, fontWeight: 600, display: 'block', marginBottom: '4px' };
+  return (
+    <Overlay onClose={onClose}>
+      <div style={{ ...modalBox, width: '500px', maxWidth: '92vw' }}>
+        <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '20px', color: T.colors.text }}>Add New Card</div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ flex: 2 }}><label style={lbl}>Word / Phrase</label><input value={word} onChange={e => setWord(e.target.value)} placeholder="e.g. Meticulous" style={inputStyle}/></div>
+          <div style={{ flex: 1 }}><label style={lbl}>Part of Speech</label>
+            <select value={pos} onChange={e => setPos(e.target.value)} style={inputStyle}>{['adj','noun','verb','adv','idiom','phrase'].map(p => <option key={p} value={p}>{p}</option>)}</select>
+          </div>
+        </div>
+        <div><label style={lbl}>Pronunciation</label><input value={pron} onChange={e => setPron(e.target.value)} placeholder="/ˌmɛt.ɪˈkjuː.ləs/" style={inputStyle}/></div>
+        <div><label style={lbl}>Meaning</label><textarea value={meaning} onChange={e => setMeaning(e.target.value)} placeholder="Definition…" style={{ ...inputStyle, height: '68px', resize: 'vertical', lineHeight: 1.5 }}/></div>
+        <div><label style={lbl}>Example Sentence</label><textarea value={example} onChange={e => setExample(e.target.value)} placeholder="Natural sentence using this word…" style={{ ...inputStyle, height: '68px', resize: 'vertical', lineHeight: 1.5 }}/></div>
+        <div><label style={lbl}>Deck</label><select value={deckId} onChange={e => setDeckId(Number(e.target.value))} style={inputStyle}>{decks.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}</select></div>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '4px' }}>
+          <button onClick={onClose} style={{ padding: '9px 18px', borderRadius: T.radius.md, border: `1.5px solid ${T.colors.border}`, background: 'none', fontFamily: T.font.sans, fontSize: '14px', color: T.colors.textMid, cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+          <button onClick={onClose} style={{ padding: '9px 22px', borderRadius: T.radius.md, border: 'none', background: T.colors.accent, color: 'white', fontFamily: T.font.sans, fontSize: '14px', fontWeight: 700, cursor: 'pointer', opacity: word.trim()&&meaning.trim()?1:0.45 }}>Add Card</button>
+        </div>
+      </div>
+    </Overlay>
+  );
+}
+
+// ─── REVIEW SESSION ───────────────────────────────────────────────────────────
+function ReviewSession({ deck, cards, onComplete, onExit }) {
+  const [idx, setIdx] = React.useState(0);
+  const [flipped, setFlipped] = React.useState(false);
+  const [results, setResults] = React.useState([]);
+  const [done, setDone] = React.useState(false);
+  const RATINGS = [
+    { id: 'again', label: 'Again', color: '#e8825a', desc: '<1d' },
+    { id: 'hard',  label: 'Hard',  color: '#c9a96e', desc: '+1d' },
+    { id: 'good',  label: 'Good',  color: '#4caf7d', desc: '+4d' },
+    { id: 'easy',  label: 'Easy',  color: '#6b9fd4', desc: '+7d' },
+  ];
+  const card = cards[idx];
+  function rate(r) {
+    const next = [...results, { cardId: card.id, rating: r }];
+    setResults(next);
+    if (idx + 1 >= cards.length) setDone(true);
+    else { setIdx(i => i+1); setFlipped(false); }
+  }
+  if (done) {
+    const counts = results.reduce((a,r) => { a[r.rating]=(a[r.rating]||0)+1; return a; }, {});
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', padding: '60px 40px' }}>
+        <div style={{ fontSize: '52px' }}>✦</div>
+        <div style={{ fontFamily: T.font.sans, fontWeight: 800, fontSize: '26px', color: T.colors.text, textAlign: 'center' }}>Session complete!</div>
+        <div style={{ fontFamily: T.font.sans, fontSize: '15px', color: T.colors.textMid, textAlign: 'center' }}>{cards.length} cards reviewed · Learn English habit marked ✓</div>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {RATINGS.map(r => counts[r.id] ? (
+            <div key={r.id} style={{ background: r.color+'22', color: r.color, borderRadius: T.radius.md, padding: '10px 18px', textAlign: 'center', minWidth: '70px' }}>
+              <div style={{ fontFamily: T.font.mono, fontSize: '22px', fontWeight: 700 }}>{counts[r.id]}</div>
+              <div style={{ fontFamily: T.font.sans, fontSize: '12px', fontWeight: 600 }}>{r.label}</div>
+            </div>
+          ) : null)}
+        </div>
+        <button onClick={onComplete} style={{ padding: '12px 32px', borderRadius: T.radius.md, background: T.colors.accent, border: 'none', color: 'white', fontFamily: T.font.sans, fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}>Back to Decks</button>
+      </div>
+    );
+  }
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <div style={{ padding: '18px 32px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <button onClick={onExit} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.font.sans, fontSize: '14px', color: T.colors.textMuted, padding: 0 }}>← Exit</button>
+          <span style={{ fontFamily: T.font.mono, fontSize: '13px', color: T.colors.textMuted }}>{idx+1} / {cards.length}</span>
+        </div>
+        <div style={{ height: '4px', background: T.colors.bgMuted, borderRadius: T.radius.full }}>
+          <div style={{ height: '100%', width: `${((idx+1)/cards.length)*100}%`, background: T.colors.accent, borderRadius: T.radius.full, transition: 'width 0.3s ease' }}/>
+        </div>
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '28px 32px' }}>
+        <div onClick={() => setFlipped(f => !f)} style={{ width: '100%', maxWidth: '500px', minHeight: '220px', background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.xl, padding: '36px', boxShadow: T.shadow.md, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '14px', textAlign: 'center' }}>
+          {!flipped ? (<>
+            <span style={{ background: T.colors.blueLight, color: T.colors.blue, borderRadius: T.radius.full, padding: '3px 12px', fontSize: '12px', fontFamily: T.font.sans, fontWeight: 600 }}>{card.partOfSpeech}</span>
+            <div style={{ fontFamily: T.font.sans, fontWeight: 800, fontSize: '34px', color: T.colors.text }}>{card.word}</div>
+            {card.pronunciation && <div style={{ fontFamily: T.font.mono, fontSize: '13px', color: T.colors.textMuted }}>{card.pronunciation}</div>}
+            <div style={{ fontFamily: T.font.sans, fontSize: '12px', color: T.colors.textMuted, marginTop: '6px' }}>Tap to reveal</div>
+          </>) : (<>
+            <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '18px', color: T.colors.text }}>{card.word}</div>
+            <div style={{ fontFamily: T.font.sans, fontSize: '15px', color: T.colors.textMid, lineHeight: 1.6 }}>{card.meaning}</div>
+            <div style={{ fontFamily: T.font.sans, fontSize: '13px', color: T.colors.textMuted, fontStyle: 'italic', background: T.colors.bgMuted, padding: '9px 14px', borderRadius: T.radius.md, lineHeight: 1.7, width: '100%' }}>"{card.example}"</div>
+          </>)}
+        </div>
+      </div>
+      <div style={{ padding: '0 32px 28px', display: 'flex', gap: '10px' }}>
+        {!flipped
+          ? <button onClick={() => setFlipped(true)} style={{ flex: 1, padding: '14px', borderRadius: T.radius.md, background: T.colors.accent, border: 'none', color: 'white', fontFamily: T.font.sans, fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}>Show Answer</button>
+          : RATINGS.map(r => (
+            <button key={r.id} onClick={() => rate(r.id)} style={{ flex: 1, padding: '11px 0', borderRadius: T.radius.md, border: `2px solid ${r.color}33`, background: r.color+'18', color: r.color, fontFamily: T.font.sans, fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+              <span>{r.label}</span>
+              <span style={{ fontFamily: T.font.mono, fontSize: '10px', opacity: 0.7 }}>{r.desc}</span>
+            </button>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
+// ─── LAYOUT CHROME ────────────────────────────────────────────────────────────
+const NAV_ITEMS = [
+  { id: 'dashboard',  label: 'Today' },
+  { id: 'habits',     label: 'Habits' },
+  { id: 'cats',       label: 'Cats' },
+  { id: 'flashcards', label: 'Flashcards' },
+];
+
+function NavIcon({ id, active }) {
+  const c = active ? T.colors.accent : T.colors.textMuted;
+  const icons = {
+    dashboard: <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="2" y="2" width="8" height="8" rx="2.5" fill={active?c:'none'} stroke={c} strokeWidth="1.6"/><rect x="12" y="2" width="8" height="8" rx="2.5" fill={active?c:'none'} stroke={c} strokeWidth="1.6"/><rect x="2" y="12" width="8" height="8" rx="2.5" fill={active?c:'none'} stroke={c} strokeWidth="1.6"/><rect x="12" y="12" width="8" height="8" rx="2.5" fill={active?c:'none'} stroke={c} strokeWidth="1.6"/></svg>,
+    habits:     <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 6h14M4 11h10M4 16h7" stroke={c} strokeWidth="1.8" strokeLinecap="round"/><circle cx="18" cy="15" r="3" fill={active?c:'none'} stroke={c} strokeWidth="1.6"/></svg>,
+    cats:       <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><ellipse cx="11" cy="13" rx="6" ry="5.5" fill={active?c:'none'} stroke={c} strokeWidth="1.6"/><path d="M6 8.5L7.5 5 9 8" stroke={c} strokeWidth="1.5" strokeLinejoin="round"/><path d="M16 8.5L14.5 5 13 8" stroke={c} strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+    flashcards: <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="5" width="14" height="10" rx="2.5" fill={active?c:'none'} stroke={c} strokeWidth="1.6"/><rect x="5" y="7" width="14" height="10" rx="2.5" fill="none" stroke={c} strokeWidth="1.6" opacity="0.45"/></svg>,
+  };
+  return icons[id];
+}
+
+function BottomNav({ active, onNav }) {
+  return (
+    <nav style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', height: '66px', borderTop: `1px solid ${T.colors.border}`, background: T.colors.bgCard, flexShrink: 0 }}>
+      {NAV_ITEMS.map(item => {
+        const isActive = active === item.id;
+        return (
+          <button key={item.id} onClick={() => onNav(item.id)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 20px', color: isActive ? T.colors.accent : T.colors.textMuted, transition: 'color 0.15s' }}>
+            <NavIcon id={item.id} active={isActive}/>
+            <span style={{ fontFamily: T.font.sans, fontSize: '11px', fontWeight: isActive ? 700 : 500 }}>{item.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+function TopBar({ title, right }) {
+  return (
+    <header style={{ height: '58px', display: 'flex', alignItems: 'center', padding: '0 22px', borderBottom: `1px solid ${T.colors.border}`, background: T.colors.bgCard, flexShrink: 0, justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: T.colors.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><ellipse cx="8" cy="9.5" rx="4.5" ry="4" fill="white" opacity=".9"/><path d="M5 6L5.5 4 7 6" stroke="white" strokeWidth="1.2" strokeLinejoin="round"/><path d="M11 6L10.5 4 9 6" stroke="white" strokeWidth="1.2" strokeLinejoin="round"/></svg>
+        </div>
+        <span style={{ fontFamily: T.font.sans, fontWeight: 800, fontSize: '17px', color: T.colors.text }}>Habitly</span>
+        <span style={{ fontFamily: T.font.sans, fontSize: '15px', color: T.colors.textMuted, fontWeight: 400 }}>· {title}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {right}
+        <div style={{ width: '32px', height: '32px', borderRadius: T.radius.full, background: T.colors.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.font.sans, fontWeight: 700, fontSize: '13px', color: 'white' }}>Y</div>
+      </div>
+    </header>
+  );
+}
+
+// ─── SCREENS ─────────────────────────────────────────────────────────────────
+
+function DashboardScreen({ onGoToFlashcards }) {
+  const [habits, setHabits] = React.useState(INIT_HABITS);
+  const [showAdd, setShowAdd] = React.useState(false);
+  const [noteId, setNoteId] = React.useState(null);
+  const [filter, setFilter] = React.useState('all');
+  const heatmap = React.useMemo(() => genHeatmap(0.82), []);
+  const weekData = [
+    {label:'Mon',count:4},{label:'Tue',count:6},{label:'Wed',count:5},{label:'Thu',count:3},{label:'Fri',count:6},{label:'Sat',count:4},{label:'Today',count:habits.filter(h=>h.done).length}
+  ];
+  const done = habits.filter(h => h.done).length;
+  const total = habits.length;
+  const filtered = filter === 'all' ? habits : habits.filter(h => h.category === filter);
+  const today = new Date(2026, 4, 4);
+  const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const noteHabit = habits.find(h => h.id === noteId);
+  return (
+    <div style={{ flex: 1, overflowY: 'auto' }}>
+      <TopBar title={dateStr} right={
+        <button onClick={() => setShowAdd(true)} style={{ padding: '6px 14px', borderRadius: T.radius.full, background: T.colors.accent, border: 'none', color: 'white', fontFamily: T.font.sans, fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span style={{ fontSize: '15px' }}>+</span> New Habit
+        </button>
+      }/>
+      <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+        {/* Summary card */}
+        <div className="fade-up" style={{ background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.xl, padding: '22px', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: T.shadow.sm, flexWrap: 'wrap' }}>
+          {/* Ring */}
+          <svg width="80" height="80" viewBox="0 0 80 80" style={{ flexShrink: 0 }}>
+            <circle cx="40" cy="40" r="32" fill="none" stroke={T.colors.bgMuted} strokeWidth="7"/>
+            <circle cx="40" cy="40" r="32" fill="none" stroke={T.colors.accent} strokeWidth="7"
+              strokeDasharray={`${2*Math.PI*32}`} strokeDashoffset={`${2*Math.PI*32*(1-done/total)}`}
+              strokeLinecap="round" transform="rotate(-90 40 40)" style={{ transition: 'stroke-dashoffset 0.5s ease' }}/>
+            <text x="40" y="44" textAnchor="middle" fontFamily="DM Mono,monospace" fontWeight="700" fontSize="14" fill={T.colors.text}>{done}/{total}</text>
+          </svg>
+          {/* Text */}
+          <div style={{ flex: 1, minWidth: '180px' }}>
+            <div style={{ fontFamily: T.font.sans, fontWeight: 800, fontSize: '20px', color: T.colors.text }}>{done === total ? 'All done! 🎉' : `${total - done} left today`}</div>
+            <div style={{ fontFamily: T.font.sans, fontSize: '13px', color: T.colors.textMuted, marginTop: '3px' }}>{Math.round(done/total*100)}% of today's habits complete</div>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+              <span style={{ background: T.colors.accentLight, color: T.colors.accent, borderRadius: T.radius.full, padding: '4px 12px', fontSize: '13px', fontFamily: T.font.sans, fontWeight: 600, whiteSpace: 'nowrap' }}>35 cards due 📖</span>
+              <button onClick={onGoToFlashcards} style={{ background: T.colors.blueLight, color: T.colors.blue, borderRadius: T.radius.full, padding: '4px 12px', fontSize: '13px', fontFamily: T.font.sans, fontWeight: 600, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>Start review →</button>
+            </div>
+          </div>
+          {/* Weekly chart */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
+            <span style={{ fontFamily: T.font.sans, fontSize: '11px', color: T.colors.textMuted, fontWeight: 600 }}>This week</span>
+            <BarChart data={weekData} color={T.colors.accent}/>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div style={{ display: 'flex', gap: '7px', flexWrap: 'wrap' }}>
+          {['all', ...CATEGORIES.map(c => c.id)].map(cat => {
+            const catObj = CATEGORIES.find(c => c.id === cat);
+            const isActive = filter === cat;
+            const col = catObj?.color || T.colors.accent;
+            return (
+              <button key={cat} onClick={() => setFilter(cat)} style={{ padding: '5px 13px', borderRadius: T.radius.full, border: `1.5px solid ${isActive ? col : T.colors.border}`, background: isActive ? col+'22' : 'transparent', color: isActive ? col : T.colors.textMid, fontFamily: T.font.sans, fontWeight: 600, fontSize: '13px', cursor: 'pointer', transition: 'all 0.15s' }}>
+                {cat === 'all' ? 'All' : catObj?.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Habit list */}
+        <div className="fade-up" style={{ background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.xl, overflow: 'hidden', boxShadow: T.shadow.sm }}>
+          {filtered.map((habit, i) => {
+            const catObj = CATEGORIES.find(c => c.id === habit.category);
+            return (
+              <div key={habit.id} style={{ borderBottom: i < filtered.length-1 ? `1px solid ${T.colors.border}` : 'none' }}>
+                <HabitRow habit={habit} catColor={catObj?.color}
+                  onToggle={id => setHabits(prev => prev.map(h => h.id === id ? { ...h, done: !h.done } : h))}
+                  onToggleSub={(hid, sid) => setHabits(prev => prev.map(h => h.id === hid ? { ...h, subHabits: h.subHabits.map(s => s.id === sid ? { ...s, done: !s.done } : s) } : h))}
+                  onNote={id => setNoteId(id)}/>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Heatmap */}
+        <div className="fade-up" style={{ background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.xl, padding: '20px 22px', boxShadow: T.shadow.sm }}>
+          <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '14px', color: T.colors.text, marginBottom: '14px' }}>
+            Activity heatmap <span style={{ fontFamily: T.font.mono, fontSize: '11px', color: T.colors.textMuted, fontWeight: 400 }}>last 6 months</span>
+          </div>
+          <HeatmapGrid completions={heatmap}/>
+        </div>
+      </div>
+
+      {showAdd && <AddHabitModal onClose={() => setShowAdd(false)} onAdd={h => setHabits(prev => [...prev, { ...h, id: Date.now(), streak: 0, longest: 0, rate: 0, done: false, note: '', flashcard: false, subHabits: h.subHabits || [] }])}/>}
+      {noteHabit && <NoteModal habitName={noteHabit.name} note={noteHabit.note} onClose={() => setNoteId(null)} onSave={text => { setHabits(prev => prev.map(h => h.id === noteId ? { ...h, note: text } : h)); setNoteId(null); }}/>}
+    </div>
+  );
+}
+
+function HabitsScreen() {
+  const [habits] = React.useState(INIT_HABITS);
+  const [selected, setSelected] = React.useState(null);
+  const heatmaps = React.useMemo(() => Object.fromEntries(habits.map(h => [h.id, genHeatmap(h.rate/100)])), []);
+  if (selected) {
+    const h = habits.find(x => x.id === selected);
+    const catObj = CATEGORIES.find(c => c.id === h.category);
+    const col = catObj?.color || T.colors.accent;
+    const chartData = [{label:'Nov',count:18},{label:'Dec',count:22},{label:'Jan',count:20},{label:'Feb',count:24},{label:'Mar',count:21},{label:'Apr',count:26},{label:'May',count:h.streak}];
+    return (
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <TopBar title={h.name} right={
+          <button onClick={() => setSelected(null)} style={{ background: T.colors.bgMuted, border: 'none', borderRadius: T.radius.md, padding: '6px 13px', fontFamily: T.font.sans, fontSize: '13px', color: T.colors.textMid, cursor: 'pointer', fontWeight: 600 }}>← Back</button>
+        }/>
+        <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <div className="fade-up" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <StatPill label="Current streak" value={`${h.streak}d`} color={T.colors.accent}/>
+            <StatPill label="Longest streak" value={`${h.longest}d`} color={T.colors.gold}/>
+            <StatPill label="Completion rate" value={`${h.rate}%`} color={T.colors.green}/>
+            <StatPill label="Total done" value="147" color={T.colors.blue}/>
+          </div>
+          <div className="fade-up" style={{ background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.xl, padding: '20px 22px', boxShadow: T.shadow.sm }}>
+            <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '14px', color: T.colors.text, marginBottom: '14px' }}>Monthly completions</div>
+            <BarChart data={chartData} color={col}/>
+          </div>
+          <div className="fade-up" style={{ background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.xl, padding: '20px 22px', boxShadow: T.shadow.sm }}>
+            <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '14px', color: T.colors.text, marginBottom: '14px' }}>Activity heatmap</div>
+            <HeatmapGrid completions={heatmaps[h.id]}/>
+          </div>
+          <div className="fade-up" style={{ background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.xl, padding: '20px 22px', boxShadow: T.shadow.sm }}>
+            <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '14px', color: T.colors.text, marginBottom: '14px' }}>This week</div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((day, i) => {
+                const done = [true,true,true,false,true,true,false][i];
+                return (
+                  <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: T.radius.full, background: done ? col : T.colors.bgMuted, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {done && <svg width="13" height="10" viewBox="0 0 13 10" fill="none"><path d="M1.5 5L5 8.5L11.5 1.5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </div>
+                    <span style={{ fontFamily: T.font.mono, fontSize: '10px', color: T.colors.textMuted }}>{day}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ flex: 1, overflowY: 'auto' }}>
+      <TopBar title="All Habits" right={null}/>
+      <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {habits.map(h => {
+          const catObj = CATEGORIES.find(c => c.id === h.category);
+          const col = catObj?.color || T.colors.accent;
+          return (
+            <div key={h.id} className="fade-up" onClick={() => setSelected(h.id)}
+              style={{ background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.lg, padding: '15px 18px', cursor: 'pointer', boxShadow: T.shadow.sm, display: 'flex', alignItems: 'center', gap: '14px', transition: 'box-shadow 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = T.shadow.md}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = T.shadow.sm}>
+              <div style={{ width: '38px', height: '38px', borderRadius: T.radius.md, background: col+'22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: col }}/>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '3px' }}>
+                  <span style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '15px', color: T.colors.text }}>{h.name}</span>
+                  <CategoryChip category={h.category} small/>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <span style={{ fontFamily: T.font.mono, fontSize: '12px', color: T.colors.textMuted }}>🔥 {h.streak}d</span>
+                  <span style={{ fontFamily: T.font.mono, fontSize: '12px', color: T.colors.textMuted }}>{h.rate}% rate</span>
+                </div>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: T.colors.textMuted, flexShrink: 0 }}><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CatsScreen() {
+  return (
+    <div style={{ flex: 1, overflowY: 'auto' }}>
+      <TopBar title="Your Cats" right={null}/>
+      <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="fade-up" style={{ background: `linear-gradient(135deg, ${T.colors.accentLight} 0%, ${T.colors.goldLight} 100%)`, borderRadius: T.radius.xl, padding: '20px 24px', border: `1px solid ${T.colors.border}` }}>
+          <div style={{ fontFamily: T.font.sans, fontWeight: 800, fontSize: '18px', color: T.colors.text }}>Cat Collection</div>
+          <div style={{ fontFamily: T.font.sans, fontSize: '13px', color: T.colors.textMid, marginTop: '3px' }}>Each habit has its own cat. Keep your streaks up to level them up!</div>
+          <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+            {[`${CAT_CONFIGS.filter(c=>c.mood==='happy').length} happy`, `${CAT_CONFIGS.reduce((s,c)=>s+c.level,0)} total levels`, `${CAT_CONFIGS.filter(c=>c.accessory).length} accessories`].map(s => (
+              <span key={s} style={{ fontFamily: T.font.mono, fontSize: '12px', color: T.colors.textMid }}>{s}</span>
+            ))}
+          </div>
+        </div>
+        <div className="fade-up" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))', gap: '14px' }}>
+          {CAT_CONFIGS.map((cat, i) => <CatCard key={cat.name} cat={cat} habitName={INIT_HABITS[i]?.name || ''}/>)}
+        </div>
+        <div className="fade-up" style={{ background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.xl, padding: '20px 22px', boxShadow: T.shadow.sm }}>
+          <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '14px', color: T.colors.text, marginBottom: '14px' }}>Upcoming accessories</div>
+          {[{ms:25,label:'Tiny backpack',desc:'25-day streak on any habit',prog:12/25},{ms:50,label:'Star pendant',desc:'50-day streak on any habit',prog:12/50},{ms:7,label:'Party hat',desc:'7-day streak — Sketch Daily',prog:0}].map((m,i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '11px 0', borderBottom: i<2?`1px solid ${T.colors.border}`:'none' }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: T.radius.md, background: T.colors.goldLight, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '17px' }}>🎒</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: T.font.sans, fontWeight: 600, fontSize: '13px', color: T.colors.text }}>{m.label}</div>
+                <div style={{ fontFamily: T.font.sans, fontSize: '12px', color: T.colors.textMuted }}>{m.desc}</div>
+                <div style={{ height: '3px', background: T.colors.bgMuted, borderRadius: T.radius.full, marginTop: '5px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${m.prog*100}%`, background: T.colors.gold, borderRadius: T.radius.full }}/>
+                </div>
+              </div>
+              <span style={{ fontFamily: T.font.mono, fontSize: '11px', color: T.colors.textMuted, flexShrink: 0 }}>{Math.round(m.prog*m.ms)}/{m.ms}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FlashcardsScreen() {
+  const [view, setView] = React.useState('decks');
+  const [activeDeck, setActiveDeck] = React.useState(null);
+  const [decks, setDecks] = React.useState(DECKS_DATA);
+  const [selectedCard, setSelectedCard] = React.useState(null);
+  const [showAddCard, setShowAddCard] = React.useState(false);
+  const [showAddDeck, setShowAddDeck] = React.useState(false);
+  const [deckName, setDeckName] = React.useState('');
+  const totalDue = decks.reduce((s,d) => s+d.dueToday, 0);
+  const reviewCards = CARDS_DATA.filter(c => c.dueDate <= '2026-05-04');
+
+  if (view === 'review' && activeDeck) {
+    const cards = reviewCards.filter(c => c.deckId === activeDeck.id);
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <TopBar title={`Review · ${activeDeck.name}`} right={null}/>
+        <ReviewSession deck={activeDeck} cards={cards.length > 0 ? cards : reviewCards.slice(0,3)}
+          onComplete={() => { setView('decks'); setActiveDeck(null); }}
+          onExit={() => { setView('decks'); setActiveDeck(null); }}/>
+      </div>
+    );
+  }
+
+  if (view === 'deck-detail' && activeDeck) {
+    const cards = CARDS_DATA.filter(c => c.deckId === activeDeck.id);
+    const posColors = { adj: T.colors.purple, noun: T.colors.blue, verb: T.colors.green, adv: T.colors.gold, idiom: T.colors.accent };
+    return (
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <TopBar title={activeDeck.name} right={
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => setShowAddCard(true)} style={{ padding: '6px 13px', borderRadius: T.radius.full, background: T.colors.accent, border: 'none', color: 'white', fontFamily: T.font.sans, fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>+ Add card</button>
+            <button onClick={() => { setView('decks'); setActiveDeck(null); }} style={{ background: T.colors.bgMuted, border: 'none', borderRadius: T.radius.md, padding: '6px 13px', fontFamily: T.font.sans, fontSize: '13px', color: T.colors.textMid, cursor: 'pointer', fontWeight: 600 }}>← Back</button>
+          </div>
+        }/>
+        <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="fade-up" style={{ display: 'flex', gap: '10px' }}>
+            <StatPill label="Total cards" value={activeDeck.cardCount}/>
+            <StatPill label="Due today" value={activeDeck.dueToday} color={T.colors.accent}/>
+          </div>
+          {(cards.length > 0 ? cards : CARDS_DATA).map(card => {
+            const pc = posColors[card.partOfSpeech] || T.colors.textMuted;
+            return (
+              <div key={card.id} className="fade-up" onClick={() => setSelectedCard(card)}
+                style={{ background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.lg, padding: '14px 18px', cursor: 'pointer', boxShadow: T.shadow.sm, transition: 'box-shadow 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = T.shadow.md}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = T.shadow.sm}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <span style={{ background: pc+'22', color: pc, borderRadius: T.radius.full, padding: '2px 9px', fontSize: '11px', fontFamily: T.font.sans, fontWeight: 600, flexShrink: 0 }}>{card.partOfSpeech}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '15px', color: T.colors.text }}>{card.word}</div>
+                    <div style={{ fontFamily: T.font.sans, fontSize: '13px', color: T.colors.textMuted, marginTop: '2px' }}>{card.meaning.slice(0,65)}{card.meaning.length>65?'…':''}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
+                    {card.dueDate <= '2026-05-04' && <span style={{ background: T.colors.accentLight, color: T.colors.accent, borderRadius: T.radius.full, padding: '2px 7px', fontSize: '10px', fontFamily: T.font.mono }}>due</span>}
+                    <span style={{ fontFamily: T.font.mono, fontSize: '10px', color: T.colors.textMuted }}>EF {card.easeFactor}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {selectedCard && <CardDetailModal card={selectedCard} onClose={() => setSelectedCard(null)}/>}
+        {showAddCard && <AddCardModal onClose={() => setShowAddCard(false)} decks={decks}/>}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto' }}>
+      <TopBar title="Flashcards" right={
+        <button onClick={() => setShowAddDeck(true)} style={{ padding: '6px 14px', borderRadius: T.radius.full, background: T.colors.accent, border: 'none', color: 'white', fontFamily: T.font.sans, fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>+ New Deck</button>
+      }/>
+      <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        {totalDue > 0 && (
+          <div className="fade-up" style={{ background: `linear-gradient(135deg, ${T.colors.blueLight} 0%, ${T.colors.accentLight} 100%)`, borderRadius: T.radius.xl, padding: '18px 22px', border: `1px solid ${T.colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px' }}>
+            <div>
+              <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '17px', color: T.colors.text }}>{totalDue} cards due today</div>
+              <div style={{ fontFamily: T.font.sans, fontSize: '13px', color: T.colors.textMid, marginTop: '2px' }}>Across {decks.filter(d=>d.dueToday>0).length} decks</div>
+            </div>
+            <button onClick={() => { setActiveDeck(decks.find(d=>d.dueToday>0)); setView('review'); }} style={{ padding: '10px 20px', borderRadius: T.radius.md, background: T.colors.accent, border: 'none', color: 'white', fontFamily: T.font.sans, fontWeight: 700, fontSize: '14px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Start session</button>
+          </div>
+        )}
+        <div className="fade-up" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: '12px' }}>
+          {decks.map(deck => {
+            const hasDue = deck.dueToday > 0;
+            return (
+              <div key={deck.id} onClick={() => { setActiveDeck(deck); setView('deck-detail'); }}
+                style={{ background: T.colors.bgCard, border: `1px solid ${T.colors.border}`, borderRadius: T.radius.lg, padding: '18px 20px', cursor: 'pointer', boxShadow: T.shadow.sm, display: 'flex', flexDirection: 'column', gap: '10px', transition: 'box-shadow 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = T.shadow.md}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = T.shadow.sm}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+                  <div>
+                    <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '15px', color: T.colors.text }}>{deck.name}</div>
+                    <div style={{ fontFamily: T.font.sans, fontSize: '12px', color: T.colors.textMuted, marginTop: '2px' }}>{deck.description}</div>
+                  </div>
+                  {hasDue && <div style={{ background: T.colors.accent, color: 'white', borderRadius: T.radius.full, padding: '2px 9px', fontSize: '11px', fontFamily: T.font.mono, fontWeight: 700, flexShrink: 0 }}>{deck.dueToday} due</div>}
+                </div>
+                <div style={{ display: 'flex', gap: '14px' }}>
+                  <span style={{ fontFamily: T.font.mono, fontSize: '11px', color: T.colors.textMuted }}>{deck.cardCount} cards</span>
+                  <span style={{ fontFamily: T.font.mono, fontSize: '11px', color: T.colors.textMuted }}>Studied {deck.lastStudied === '2026-05-04' ? 'today' : deck.lastStudied}</span>
+                </div>
+                <button onClick={e => { e.stopPropagation(); setActiveDeck(deck); setView('review'); }} style={{ padding: '8px 0', borderRadius: T.radius.md, border: hasDue ? 'none' : `1.5px solid ${T.colors.border}`, background: hasDue ? T.colors.accent : 'transparent', color: hasDue ? 'white' : T.colors.textMid, fontFamily: T.font.sans, fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.15s' }}>
+                  {hasDue ? `Study ${deck.dueToday} cards` : 'Browse'}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {showAddDeck && (
+        <Overlay onClose={() => setShowAddDeck(false)}>
+          <div style={{ ...modalBox, width: '400px', maxWidth: '92vw' }}>
+            <div style={{ fontFamily: T.font.sans, fontWeight: 700, fontSize: '20px', color: T.colors.text }}>New Deck</div>
+            <input value={deckName} onChange={e => setDeckName(e.target.value)} placeholder="Deck name…" style={inputStyle}/>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowAddDeck(false)} style={{ padding: '9px 18px', borderRadius: T.radius.md, border: `1.5px solid ${T.colors.border}`, background: 'none', fontFamily: T.font.sans, fontSize: '14px', color: T.colors.textMid, cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+              <button onClick={() => { if (deckName.trim()) { setDecks(prev => [...prev, { id: Date.now(), name: deckName, description: '', cardCount: 0, dueToday: 0, lastStudied: '—' }]); setDeckName(''); setShowAddDeck(false); }}} style={{ padding: '9px 20px', borderRadius: T.radius.md, border: 'none', background: T.colors.accent, color: 'white', fontFamily: T.font.sans, fontSize: '14px', fontWeight: 700, cursor: 'pointer', opacity: deckName.trim()?1:0.45 }}>Create</button>
+            </div>
+          </div>
+        </Overlay>
+      )}
+    </div>
+  );
+}
+
+// ─── ROOT APP ─────────────────────────────────────────────────────────────────
+function App() {
+  const [screen, setScreen] = React.useState('dashboard');
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  React.useEffect(() => {
+    if (tweaks?.accent) {
+      T.colors.accent = tweaks.accent;
+      T.colors.accentLight = tweaks.accent + '22';
+    }
+  }, [tweaks?.accent]);
+
+  return (
+    <div style={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column', background: T.colors.bg, overflow: 'hidden', fontFamily: T.font.sans }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {screen === 'dashboard'  && <DashboardScreen onGoToFlashcards={() => setScreen('flashcards')}/>}
+        {screen === 'habits'     && <HabitsScreen/>}
+        {screen === 'cats'       && <CatsScreen/>}
+        {screen === 'flashcards' && <FlashcardsScreen/>}
+      </div>
+      <BottomNav active={screen} onNav={setScreen}/>
+      <TweaksPanel>
+        <TweakSection title="Accent color">
+          <TweakColor label="Primary" value={tweaks.accent} onChange={v => setTweak('accent', v)}/>
+        </TweakSection>
+        <TweakSection title="Streaks">
+          <TweakToggle label="Show emoji 🔥" value={tweaks.showStreakEmoji} onChange={v => setTweak('showStreakEmoji', v)}/>
+        </TweakSection>
+        <TweakSection title="Cat size">
+          <TweakRadio label="" value={tweaks.catSize} options={[{value:'small',label:'S'},{value:'medium',label:'M'},{value:'large',label:'L'}]} onChange={v => setTweak('catSize', v)}/>
+        </TweakSection>
+      </TweaksPanel>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
+</body>
+</html>
